@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package iot.laptiming;
+
+option go_package = "iot.laptiming";
+
+enum PitStatus {
+    UKNOWN = 0;
+    PIT_ENTRY = 1;
+    PIT_EXIT = 2;
+}
+
+message PitStatusMessage {
+    int32 id = 1;
+    optional int64 timestamp = 2;
+    optional PitStatus pitStatus = 3;
+}
+
+message PitStatusResponse {}
+
+message LapTimeMessage {
+    int32 id = 1;
+    int64 lapTime = 2;
+    int64 timestamp = 3;
+}
+
+message LapTimeResponse {}
+
+message TestMessage{
+    bool enabled = 1;
+    int64 timestamp = 2;
+}
+
