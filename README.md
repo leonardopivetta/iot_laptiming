@@ -37,8 +37,8 @@ Boards used:
 
 
 Passive components:
-- 2 1k Ω resistor
-- 2 2k Ω resistor
+- 2 1k Ω resistor (could be avoided by using a software serial)
+- 2 2k Ω resistor (could be avoided by using a software serial)
 - 3+(*n*) IR transmitter
 - 3+(*n*) IR receiver
 - *n* rgb leds
@@ -50,6 +50,7 @@ Passive components:
 - Go (for the backend)
 - Firebase account (for the database)
 - Protobuf compiler (for the protobuf files) (not required if you use the precompiled files)
+- Python to compile protobuf files into nanopb files
 
 ## Hardware configuration
 ### Pit entry/exit
@@ -71,37 +72,65 @@ The car constantly transmits his `car_id_code` (univoque for each car) via IR to
 
 ```bash
 .
-├── backend                 #Source code of the backend, written in Go
+├── backend                     #Source code of the backend, written in Go
 │   ├── firebase_interface
-│   ├── laptiming           #Protobuf files
-│   └── secrets
-├── embedded                #Source code of the embedded boards, written in C++
-│   ├── car
+│   ├── laptiming               #Proto and laptiming routes
+│   ├── main.go
+│   ├── secrets                 #Backend secrets
+│   └── telegram_interface      #Telegram bot interface
+├── embedded_code               #Source code of the embedded boards, written in C++
+│   ├── car                     #Code for the car boards
+│   │   ├── include
+│   │   ├── lib
+│   │   ├── platformio.ini
 │   │   └── src
-│   ├── pit_entry_exit
-│   │   ├── proto           #Protobuf files for serial communication
+│   ├── pit                     #Code for the pit boards  
+│   │   ├── include
+│   │   ├── lib
+│   │   ├── platformio.ini
 │   │   └── src
-│   └── start
-│       ├── proto           #Protobuf files for serial communication and HTTP requests to the backend
+│   └── start                   #Code for the start board
+│       ├── include
+│       │   ├── http      
+│       │   ├── nanopb
+│       │   ├── proto
+│       ├── lib
+│       ├── platformio.ini
 │       └── src
-└── protobuf
+│           ├── http
+│           ├── nanopb
+│           └── proto
+│── img                         #README images
+├── powerpoint                  #presentation
+└── proto                       #Protobuf files
+    ├── compile.sh
+    ├── messages.proto
+    └── nanopb
 ```
 
 ## Run instructions
 
 Start the backend:
 - Insert the secrets in the `backend/secrets` folder (such as the json file for the firebase account)
+  - The secrets must be named `firebase.json` and `telegram.env`
 - Run `go run backend/main.go`
 
 Flash the boards:
-- Go to the desired folder inside `embedded` (e.g. `embedded/car`)
+- Go to the desired folder inside `embedded_code` (e.g. `embedded_code/car`)
 - `pio run -e <environment> -t build` (where `<environment>` is the name of the environment in the `platformio.ini` file)
 - `pio run -e <environment> -t upload` 
 
+Chage the protobuf definition:
+- Write the messages on  `proto/messages.proto`
+- Run the `proto/compile.sh` command
+- Go in the `proto` folder and run `protoc -o messages.pb messages.proto`
+- Then `python nanopb/generator/nanopb_generator.py message.pb`
+- Copy the `messages.pb.h` and `messages.pb.cc` inside the `embedded_code/start/` folders (`include` and `src` accordingly)
+
 ## Links
 
-- [Presentation]()
-- [Video]()
+- [Presentation](https://docs.google.com/presentation/d/1icwILWqBtrO3eo8dQbCCBscmbWkpSkbpfpHDUgP1MSg/edit?usp=sharing)
+- [Video](https://youtu.be/P7rQA0mt8G8)
 
 ## Team members and roles
 

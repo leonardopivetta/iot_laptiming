@@ -14,7 +14,7 @@
 #define SS_RX D6
 #define SS_TX D5
 
-SoftwareSerial mySerial;
+SoftwareSerial pitEntrySerial;
 SoftwareSerial pitExitSerial;
 
 // The time that the car should not be in the field of view after the receive in [[ms]]
@@ -69,11 +69,11 @@ void setup()
   IrReceiver.begin(IR_RECEIVE_PIN);
   // -------------------------- SERIAL INITIALIZATION --------------------------
   Serial.begin(9600);
-  mySerial.begin(9600, SWSERIAL_8N1, SS_RX, SS_TX, false);
+  pitEntrySerial.begin(9600, SWSERIAL_8N1, SS_RX, SS_TX, false);
   pitExitSerial.begin(9600, SWSERIAL_8N1, D7, -1, false);
   #ifdef DEBUG_FLAG
-  if(!mySerial){
-    Serial.println("Failed to start SoftwareSerial mySerial");
+  if(!pitEntrySerial){
+    Serial.println("Failed to start SoftwareSerial pitEntrySerial");
     while(1){delay(1000);}
   }
   if(!pitExitSerial){
@@ -118,7 +118,7 @@ void loop()
   receiveIR();
   sendIr();
   PIT(pitExitSerial, PIT_EXIT, OUT_LAP)
-  PIT(mySerial, PIT_ENTRY, PIT)
+  PIT(pitEntrySerial, PIT_ENTRY, PIT)
 }
 
 
@@ -144,19 +144,20 @@ void receiveIR(){
       Serial.println(carIndex);
       #endif
 
-    switch(current_car->status){
-      case OUT_LAP:
-        // Set the car status to lap
-        current_car->status = LAP;
-        break;
-      case LAP:
-        // Send the lap time to the backend
-        iot_laptiming_LapTimeMessage message;
-        message.id = carIndex;
-        message.lapTime = current_car->lap_timing;
-        message.timestamp = millis();
-        backendConnector->sendLaptime(&message);
-        break;
+      switch(current_car->status){
+        case OUT_LAP:
+          // Set the car status to lap
+          current_car->status = LAP;
+          break;
+        case LAP:
+          // Send the lap time to the backend
+          iot_laptiming_LapTimeMessage message;
+          message.id = carIndex;
+          message.lapTime = current_car->lap_timing;
+          message.timestamp = millis();
+          backendConnector->sendLaptime(&message);
+          break;
+      }
     }
   }
 }
